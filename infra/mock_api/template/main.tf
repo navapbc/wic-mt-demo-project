@@ -24,7 +24,7 @@ provider "aws" {
   profile   = "wic-mt"
   default_tags {
     tags = merge(
-      module.constants.business_tags, {
+      module.constants.api_tags, {
         environment = var.environment_name
         })
   }

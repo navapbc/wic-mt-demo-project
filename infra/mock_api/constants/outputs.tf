@@ -1,7 +1,7 @@
-output "business_tags"{
+output "api_tags"{
   
   value = {
-    project     = "wic-mt-mock-api"
+    project     = "mock-api"
     owner       = "wic-mt-demo"
     repository  = "https://github.com/navapbc/wic-mt-demo-project-mock-api"
   }
