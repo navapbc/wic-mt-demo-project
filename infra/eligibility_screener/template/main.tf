@@ -23,9 +23,19 @@ resource "aws_dynamodb_table" "tf_state_table" {
   }
 }
 
+module "constants" {
+  source = "../constants"
+}
+
 provider "aws" {
   region = "us-east-1"
   profile = "wic-mt"
+  default_tags {
+    tags = merge(
+      module.constants.screener_tags, {
+        environment = var.environment_name
+        })
+  }
 }
 data "aws_region" "current" {
 }

@@ -1,3 +1,28 @@
+# security group for screener
+resource "aws_security_group" "allow-screener-traffic" {
+  name = "allow_screener_traffic"
+  description = "This rule blocks all traffic unless it is HTTPS for the eligibility screener"
+  vpc_id = "vpc-032e680f92b88bb68" # don't like that this is hardcoded; default vpc
+  # may need to update application to accept 80 then redirect.
+
+  ingress {
+    description = "TCP traffic from VPC"
+    from_port = 80
+    to_port   = 80
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/8"]
+  }
+
+  egress {
+    description = "allow all outbound traffic from screener"
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+}
+
 resource "aws_ecr_repository" "eligibility-screener-repository" {
   name                 = "eligibility-screener-repo"
   image_tag_mutability = "IMMUTABLE"
@@ -42,6 +67,7 @@ resource "aws_ecs_service" "eligibility-screener-ecs-service" {
   network_configuration {
     subnets          = ["subnet-06b4ec8ff6311f69d"]
     assign_public_ip = true
+    security_groups = [aws_security_group.allow-screener-traffic.id]
   }
   desired_count = 1
 
