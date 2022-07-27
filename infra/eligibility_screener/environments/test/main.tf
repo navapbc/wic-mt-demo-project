@@ -12,7 +12,7 @@ terraform {
 
     backend "s3" {
     bucket         = "wic-mt-tf-state"
-    key            = "terraform/screener.tfstate"
+    key            = "terraform/screener/${local.environment_name}.tfstate"
     region         = "us-east-1"
     encrypt        = "true"
     dynamodb_table = "wic_terraform_locks" 
