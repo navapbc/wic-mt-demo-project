@@ -13,7 +13,7 @@ terraform {
 
     backend "s3" {
     bucket         = "wic-mt-tf-state"
-    key            = "terraform/mock_api/${local.environment_name}.tfstate"
+    key            = "terraform/mock_api/test.tfstate"
     region         = "us-east-1"
     encrypt        = "true"
     dynamodb_table = "wic_terraform_locks" 

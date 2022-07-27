@@ -11,10 +11,6 @@ terraform {
   }
 }
 
-data "aws_dynamodb_table" "terraform_state_table"{
-  name    = "wic_terraform_locks" 
-}
-
 module "constants" {
   source = "../constants"
 }
