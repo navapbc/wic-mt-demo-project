@@ -118,6 +118,13 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
           containerPort: 8080
         }
       ]
+      readonlyRootFilesystem = true
+      linuxParameters = {
+        capabilities = {
+          drop = ["ALL"]
+        },
+        initProcessEnabled = true
+      }
     }
   ])
 }
