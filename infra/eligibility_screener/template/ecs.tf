@@ -2,8 +2,7 @@
 resource "aws_security_group" "allow-screener-traffic" {
   name = "allow_screener_traffic"
   description = "This rule blocks all traffic unless it is HTTPS for the eligibility screener"
-  vpc_id = "vpc-032e680f92b88bb68" # don't like that this is hardcoded; default vpc
-  # may need to update application to accept 80 then redirect.
+  vpc_id = "vpc-032e680f92b88bb68"
 
   ingress {
     description = "TCP traffic from VPC"
@@ -25,18 +24,12 @@ resource "aws_security_group" "allow-screener-traffic" {
 
 resource "aws_ecr_repository" "eligibility-screener-repository" {
   name                 = "eligibility-screener-repo"
-  image_tag_mutability = "IMMUTABLE"
+  image_tag_mutability = "MUTABLE"
 }
-
-resource "aws_ecr_repository_policy" "eligibility-screener-repo-policy" {
-  repository = aws_ecr_repository.eligibility-screener-repository.name
-  policy     = <<EOF
-  {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "Stmt1657823207798",
-      "Action": [
+data "aws_iam_policy_document" "ecr-perms"{
+  statement {
+    sid = "ECRPerms"
+    actions = [
         "ecr:BatchCheckLayerAvailability",
         "ecr:BatchGetImage",
         "ecr:CompleteLayerUpload",
@@ -44,14 +37,19 @@ resource "aws_ecr_repository_policy" "eligibility-screener-repo-policy" {
         "ecr:GetLifecyclePolicy",
         "ecr:InitiateLayerUpload",
         "ecr:PutImage",
-        "ecr:UploadLayerPart"
-      ],
-      "Effect": "Allow",
-      "Principal": "*"
+        "ecr:UploadLayerPart" 
+    ]
+    effect = "Allow"
+    principals {
+      type  = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
-  ]
   }
-  EOF
+}
+
+resource "aws_ecr_repository_policy" "eligibility-screener-repo-policy" {
+  repository = aws_ecr_repository.eligibility-screener-repository.name
+  policy     = data.aws_iam_policy_document.ecr-perms.json
 }
 # create a github and a user assume role for the principals ^
 

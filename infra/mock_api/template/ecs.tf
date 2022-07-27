@@ -1,25 +1,15 @@
 # fargate config goes in this file
-# create task def
-# may need script to trigger task aftwerwards
 # create service and schedule (optional)
-# networking??
-  # security groups, etc
 
-# may need to set security group perms
 resource "aws_ecr_repository" "mock-api-repository" {
   name                 = "mock-api-repo"
   image_tag_mutability = "IMMUTABLE"
 }
 
-resource "aws_ecr_repository_policy" "mock-api-repo-policy" {
-  repository = aws_ecr_repository.mock-api-repository.name
-  policy     = <<EOF
-  {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "Stmt1657823207798",
-      "Action": [
+data "aws_iam_policy_document" "ecr-perms"{
+  statement {
+    sid = "ECRPerms"
+    actions = [
         "ecr:BatchCheckLayerAvailability",
         "ecr:BatchGetImage",
         "ecr:CompleteLayerUpload",
@@ -27,14 +17,19 @@ resource "aws_ecr_repository_policy" "mock-api-repo-policy" {
         "ecr:GetLifecyclePolicy",
         "ecr:InitiateLayerUpload",
         "ecr:PutImage",
-        "ecr:UploadLayerPart"
-      ],
-      "Effect": "Allow",
-      "Principal": "*"
+        "ecr:UploadLayerPart" 
+    ]
+    effect = "Allow"
+    principals {
+      type  = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
-  ]
   }
-  EOF
+}
+
+resource "aws_ecr_repository_policy" "mock-api-repo-policy" {
+  repository = aws_ecr_repository.mock-api-repository.name
+  policy     = data.aws_iam_policy_document.ecr-perms.json
 }
 # create a github and a user assume role for the principals ^
 
@@ -64,7 +59,7 @@ resource "aws_ecs_service" "mock-api-ecs-service" {
 resource "aws_security_group" "allow-api-traffic" {
   name = "allow_api_traffic"
   description = "This rule blocks all traffic unless it is HTTPS for the eligibility screener"
-  vpc_id = "vpc-032e680f92b88bb68" # don't like that this is hardcoded; default vpc
+  vpc_id = "vpc-032e680f92b88bb68"
 
   ingress {
     description = "Allow traffic from screener"
@@ -72,7 +67,7 @@ resource "aws_security_group" "allow-api-traffic" {
     to_port   = 443
     protocol = "tcp"
     # use security group as the source
-    cidr_blocks = ["10.0.0.0/8"]
+    cidr_blocks = ["172.31.0.0/16"] # ip range of the VPC
   }
 
   # This is for testing purposes ONLY
