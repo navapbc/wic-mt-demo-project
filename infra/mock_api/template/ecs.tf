@@ -3,7 +3,7 @@
 
 resource "aws_ecr_repository" "mock-api-repository" {
   name                 = "mock-api-repo"
-  image_tag_mutability = "IMMUTABLE"
+  image_tag_mutability = "MUTABLE"
 }
 
 data "aws_iam_policy_document" "ecr-perms"{
@@ -59,7 +59,7 @@ resource "aws_ecs_service" "mock-api-ecs-service" {
 resource "aws_security_group" "allow-api-traffic" {
   name = "allow_api_traffic"
   description = "This rule blocks all traffic unless it is HTTPS for the eligibility screener"
-  vpc_id = "vpc-032e680f92b88bb68"
+  vpc_id = module.constants.vpc_id
 
   ingress {
     description = "Allow traffic from screener"

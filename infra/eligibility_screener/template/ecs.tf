@@ -2,7 +2,7 @@
 resource "aws_security_group" "allow-screener-traffic" {
   name = "allow_screener_traffic"
   description = "This rule blocks all traffic unless it is HTTPS for the eligibility screener"
-  vpc_id = "vpc-032e680f92b88bb68"
+  vpc_id = module.constants.vpc_id
 
   ingress {
     description = "TCP traffic from VPC"
