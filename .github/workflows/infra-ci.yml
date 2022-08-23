@@ -5,6 +5,7 @@ on:
     paths:
       - '**.tf'
       - 'alsia/add-formatting-job'
+# find a way to add working-dir in a way that can be easily modified later
 
 jobs:
   format:
@@ -16,7 +17,8 @@ jobs:
 
       - name: Format Terraform
         run: |
-          terraform fmt
+          terraform fmt  -recursive -check  ./infra
+
 
   verify-plan:
     name: Validate Terraform Plan
@@ -32,11 +34,14 @@ jobs:
       
       - name: Terraform Init
         run: terraform init
+        working-directory:
 
       - name: Create Terraform execution plan
         run: |
           terraform validate
           terraform plan -out=plan.tfplan
+        working-directory:
       
       - name: Apply from execution plan
         run: terraform apply plan.tfplan
+        working-directory:
