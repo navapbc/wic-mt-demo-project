@@ -31,12 +31,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
-      - name: Format Terraform
-        uses: hashicorp/setup-terraform@v2
+      - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.2.0
           terraform_wrapper: false
+
+      - name: Format Terraform
         run: |
           echo "run terraform fmt  -recursive ./infra if this fails"
           terraform fmt  -recursive -check  ${{ env.working-dir }}
