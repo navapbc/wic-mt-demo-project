@@ -3,28 +3,28 @@
 terraform {
   required_version = "1.2.0"
 
-    backend "s3" {
+  backend "s3" {
     bucket         = "wic-mt-tf-state"
     key            = "terraform/screener/test.tfstate"
     region         = "us-east-1"
     encrypt        = "true"
-    dynamodb_table = "wic_terraform_locks" 
+    dynamodb_table = "wic_terraform_locks"
     profile        = "wic-mt" # may need to rethink this; no profile defaults to env variables
   }
 
   required_providers {
-    aws  = {
+    aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16.0" 
+      version = "~> 4.16.0"
     }
   }
 }
 
 # dynamodb table to support state locking
 resource "aws_dynamodb_table" "tf_state_table" {
-  name = "wic_terraform_locks"
-  hash_key = "LockID"
-  read_capacity = 1
+  name           = "wic_terraform_locks"
+  hash_key       = "LockID"
+  read_capacity  = 1
   write_capacity = 1
   attribute {
     name = "LockID"
@@ -37,18 +37,18 @@ module "constants" {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region  = "us-east-1"
   profile = "wic-mt"
   default_tags {
     tags = merge(
       module.constants.screener_tags, {
         environment = var.environment_name
-        })
+    })
   }
 }
 data "aws_region" "current" {
 }
 
 data "aws_caller_identity" "current" {
-  
+
 }

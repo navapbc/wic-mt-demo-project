@@ -1,0 +1,26 @@
+name: Infrastructure Linting Checks
+
+on:
+  push:
+    paths:
+      - '**.tf'
+      - main
+env:
+  working-dir: ./infra
+
+jobs:
+  format:
+    name: Format Terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.2.0
+          terraform_wrapper: false
+
+      - name: Format Terraform
+        run: |
+          echo "run terraform fmt  -recursive ./infra if this fails"
+          terraform fmt  -recursive -check  ${{ env.working-dir }}

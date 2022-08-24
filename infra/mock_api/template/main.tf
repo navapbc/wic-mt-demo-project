@@ -4,9 +4,9 @@ terraform {
   required_version = "1.2.0"
 
   required_providers {
-    aws  = {
+    aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16.0" 
+      version = "~> 4.16.0"
     }
   }
 }
@@ -16,13 +16,13 @@ module "constants" {
 }
 
 provider "aws" {
-  region    = "us-east-1"
-  profile   = "wic-mt"
+  region  = "us-east-1"
+  profile = "wic-mt"
   default_tags {
     tags = merge(
       module.constants.api_tags, {
         environment = var.environment_name
-        })
+    })
   }
 }
 
