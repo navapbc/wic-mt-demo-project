@@ -5,13 +5,21 @@ resource "aws_security_group" "allow-screener-traffic" {
   vpc_id      = module.constants.vpc_id
 
   ingress {
-    description = "TCP traffic from VPC"
-    from_port   = 80
-    to_port     = 80
+    description = "VPC traffic"
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/8"]
+    # use security group as the source
+    cidr_blocks = ["172.31.0.0/16"] # ip range of the VPC
   }
-
+  ingress {
+    description = "Allow traffic from internet"
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    # use security group as the source
+    cidr_blocks = ["0.0.0.0/0"] # ip range of the VPC
+  }
   egress {
     description      = "allow all outbound traffic from screener"
     from_port        = 0
