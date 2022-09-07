@@ -10,7 +10,31 @@
 
 # }
 
+# ----------------------------------------------------------
+# 
+# data attributes for managed resources
+#
+# ----------------------------------------------------------
+data "aws_ecr_repository" "eligibility-screener-repository" {
+  name = "eligibility-screener-repo"
+}
 
+data "aws_ecr_repository" "mock-api-repository" {
+  name = "mock-api-repo"
+}
+
+data "aws_ecs_service" "eligibility-screener-ecs-service" {
+  service_name = "${var.environment_name}-ecs-service"
+  cluster_arn = "arn:aws:ecs:us-east-1:546642427916:cluster/${var.environment_name}"
+}
+
+data "aws_ecs_service" "mock-api-ecs-service" {
+  service_name = "${var.environment_name}-api-ecs-service"
+  cluster_arn = "arn:aws:ecs:us-east-1:546642427916:cluster/${var.environment_name}"
+}
+data "aws_ecs_cluster" "application-cluster" {
+  cluster_name = var.environment_name
+}
 # ----------------------------------------------------------
 # 
 # IAM Roles for FARGATE
@@ -102,9 +126,12 @@ data "aws_iam_policy_document" "deploy_action" {
   statement {
     sid     = "WICUpdateECR"
     actions = ["ecs:UpdateCluster", "ecs:UpdateService", "ecr:*"]
-    resources = [aws_ecs_cluster.eligibility-screener-ecs-cluster.arn,
-      aws_ecr_repository.eligibility-screener-repository.arn,
-      aws_ecs_service.eligibility-screener-ecs-service.id
+    resources = [
+      data.aws_ecs_cluster.application-cluster.arn,
+      data.aws_ecr_repository.eligibility-screener-repository.arn,
+      data.aws_ecs_service.eligibility-screener-ecs-service.id,
+      data.aws_ecs_service.mock-api-ecs-service.id,
+      data.aws_ecr_repository.mock-api-repository.arn
     ]
   }
   statement {
