@@ -3,15 +3,7 @@ resource "aws_security_group" "allow-screener-traffic" {
   name        = "allow_screener_traffic"
   description = "This rule blocks all traffic unless it is HTTPS for the eligibility screener"
   vpc_id      = module.constants.vpc_id
-
-  ingress {
-    description = "VPC traffic"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    # use security group as the source
-    cidr_blocks = ["172.31.0.0/16"] # ip range of the VPC
-  }
+  
   ingress {
     description = "Allow traffic from internet"
     from_port   = 3000
