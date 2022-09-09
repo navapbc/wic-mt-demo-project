@@ -94,7 +94,14 @@ resource "aws_ecs_task_definition" "eligibility-screener-ecs-task-definition" {
         {
           containerPort : 8080
         }
-      ]
+      ],
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = {
+          "awslogs-group" = "" # put log group from cloudwatch.tf here
+          "awslogs-region" = "us-east-1"
+        }
+      }
     }
   ])
 }
