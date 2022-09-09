@@ -7,7 +7,7 @@ resource "aws_security_group" "allow-screener-traffic" {
   ingress {
     description = "Allow traffic from internet"
     from_port   = 3000
-    to_port     = 3000
+    to_port     = 8080
     protocol    = "tcp"
     # use security group as the source
     cidr_blocks = ["0.0.0.0/0"] # ip range of the VPC
