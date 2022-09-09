@@ -94,8 +94,7 @@ resource "aws_security_group" "allow-api-traffic" {
 # todo: specify resources for access under networking
 # todo: create ALB and autoscaling
 # todo: limit principals and resources to grant least privelege
-# todo: create plan to migrate all of this + infra in eligibility screener to one repo
-# todo: make decision on initial deploy. should users let it fail and then deploy again?
+
 resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
   family                   = "${var.environment_name}-api-task-definition"
   network_mode             = "awsvpc"

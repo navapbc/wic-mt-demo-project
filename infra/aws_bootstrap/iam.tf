@@ -153,6 +153,33 @@ resource "aws_iam_user_policy_attachment" "deploy_action" {
 
 # ----------------------------------------------------------
 # 
+# IAM Roles for RDS
+#
+# ----------------------------------------------------------
+
+resource "aws_iam_role" "rds_db_user" {
+  name = "rds-user"
+  
+}
+
+resource "aws_iam_policy" "rds_policy" {
+  name = "rds-policy"
+  policy = ""
+}
+
+data "aws_iam_policy_document" "rds_policy"{
+  statement {
+    sid = "AllowRDSAccess"
+    actions =[
+      "rds:CreateDBInstance",
+      "rds:CreateDBSnapshot",
+      "rds:ModifyDBInstance"
+    ]
+    resources = []
+  }
+}
+# ----------------------------------------------------------
+# 
 # Identity connector for AWS
 #
 # ----------------------------------------------------------
