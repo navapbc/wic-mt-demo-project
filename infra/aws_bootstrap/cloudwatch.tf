@@ -5,7 +5,7 @@
 # Mock API
 # ----------------------------------------------
 resource "aws_cloudwatch_log_group" "mock_api" {
-  name = "mock-api"
+  name              = "mock-api"
   retention_in_days = 90
 }
 
@@ -13,6 +13,6 @@ resource "aws_cloudwatch_log_group" "mock_api" {
 # Eligibility Screener
 # ----------------------------------------------
 resource "aws_cloudwatch_log_group" "eligibility_screener" {
-  name = "screener"
+  name              = "screener"
   retention_in_days = 90
 }

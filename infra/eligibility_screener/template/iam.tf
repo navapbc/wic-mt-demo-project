@@ -41,7 +41,7 @@ data "aws_iam_policy_document" "access_ecr_policy" {
       "ecr:BatchCheckLayerAvailability",
       "ecr:GetDownloadUrlForLayer",
       "ecr:BatchGetImage"
-      ]
+    ]
     resources = ["*"]
   }
   statement {

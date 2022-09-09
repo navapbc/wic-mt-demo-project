@@ -92,8 +92,8 @@ resource "aws_security_group" "allow-api-traffic" {
 
 # todo: change container def to data block
 # todo: specify security group
-data "aws_cloudwatch_log_group" "mock_api"{
-name = "mock-api"
+data "aws_cloudwatch_log_group" "mock_api" {
+  name = "mock-api"
 }
 resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
   family                   = "${var.environment_name}-ecs-task-definition"
@@ -117,7 +117,7 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
       logConfiguration = {
         logDriver = "awslogs",
         options = {
-          "awslogs-group" = data.aws_cloudwatch_log_group.mock_api
+          "awslogs-group"  = data.aws_cloudwatch_log_group.mock_api
           "awslogs-region" = "us-east-1"
         }
       }
