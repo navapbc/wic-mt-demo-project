@@ -1,3 +1,13 @@
+# load balancer to redirect
+# resource "aws_lb" "screener" {
+#   name = "${var.environment_name}-screener-lb"
+#   internal = false
+#   load_balancer_type = "application"
+#   security_groups = [aws_security_group.allow-screener-traffic.id]
+# }
+# resource "aws_lb_listener" "screener" {
+
+# }
 # security group for screener
 resource "aws_security_group" "allow-screener-traffic" {
   name        = "allow_screener_traffic"
@@ -5,13 +15,13 @@ resource "aws_security_group" "allow-screener-traffic" {
   vpc_id      = module.constants.vpc_id
 
   ingress {
-    description = "TCP traffic from VPC"
-    from_port   = 80
-    to_port     = 80
+    description = "Allow traffic from internet"
+    from_port   = 3000
+    to_port     = 3000
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/8"]
+    # use security group as the source
+    cidr_blocks = ["0.0.0.0/0"] # ip range of the VPC
   }
-
   egress {
     description      = "allow all outbound traffic from screener"
     from_port        = 0
