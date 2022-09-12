@@ -28,9 +28,8 @@ resource "aws_security_group" "allow-screener-traffic" {
   }
 }
 
-resource "aws_ecr_repository" "eligibility-screener-repository" {
+data "aws_ecr_repository" "eligibility-screener-repository" {
   name                 = "eligibility-screener-repo"
-  image_tag_mutability = "MUTABLE"
 }
 data "aws_iam_policy_document" "ecr-perms" {
   statement {
@@ -54,7 +53,7 @@ data "aws_iam_policy_document" "ecr-perms" {
 }
 
 resource "aws_ecr_repository_policy" "eligibility-screener-repo-policy" {
-  repository = aws_ecr_repository.eligibility-screener-repository.name
+  repository = data.aws_ecr_repository.eligibility-screener-repository.name
   policy     = data.aws_iam_policy_document.ecr-perms.json
 }
 # create a github and a user assume role for the principals ^
@@ -64,7 +63,7 @@ resource "aws_ecs_cluster" "eligibility-screener-ecs-cluster" {
 }
 
 resource "aws_ecs_service" "eligibility-screener-ecs-service" {
-  name            = "${var.environment_name}-screener-service"
+  name            = "${var.environment_name}-screener-ecs-service"
   cluster         = aws_ecs_cluster.eligibility-screener-ecs-cluster.id
   task_definition = aws_ecs_task_definition.eligibility-screener-ecs-task-definition.arn
   launch_type     = "FARGATE"

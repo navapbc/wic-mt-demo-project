@@ -23,18 +23,6 @@ data "aws_ecr_repository" "mock-api-repository" {
   name = "mock-api-repo"
 }
 
-data "aws_ecs_service" "eligibility-screener-ecs-service" {
-  service_name = "${var.environment_name}-screener-service"
-  cluster_arn  = "arn:aws:ecs:us-east-1:546642427916:cluster/${var.environment_name}"
-}
-
-data "aws_ecs_service" "mock-api-ecs-service" {
-  service_name = "${var.environment_name}-api-ecs-service"
-  cluster_arn  = "arn:aws:ecs:us-east-1:546642427916:cluster/${var.environment_name}"
-}
-data "aws_ecs_cluster" "application-cluster" {
-  cluster_name = var.environment_name
-}
 # ----------------------------------------------------------
 # 
 # IAM Roles for FARGATE
@@ -127,10 +115,9 @@ data "aws_iam_policy_document" "deploy_action" {
     sid     = "WICUpdateECR"
     actions = ["ecs:UpdateCluster", "ecs:UpdateService", "ecr:*"]
     resources = [
-      data.aws_ecs_cluster.application-cluster.arn,
+      "arn:aws:ecs:us-east-1:546642427916:service/${var.environment_name}/*",
+      "arn:aws:ecs:us-east-1:546642427916:cluster/${var.environment_name}",
       data.aws_ecr_repository.eligibility-screener-repository.arn,
-      data.aws_ecs_service.eligibility-screener-ecs-service.id,
-      data.aws_ecs_service.mock-api-ecs-service.id,
       data.aws_ecr_repository.mock-api-repository.arn
     ]
   }
@@ -142,7 +129,7 @@ data "aws_iam_policy_document" "deploy_action" {
 }
 
 resource "aws_iam_policy" "deploy_action" {
-  name   = "wic-mt-deploy"
+  name   = "${var.environment_name}-wic-mt-deploy"
   policy = data.aws_iam_policy_document.deploy_action.json
 }
 
