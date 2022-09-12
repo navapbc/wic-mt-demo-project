@@ -1,5 +1,5 @@
 data "aws_ecr_repository" "mock-api-repository" {
-  name                 = "mock-api-repo"
+  name = "mock-api-repo"
 }
 
 data "aws_iam_policy_document" "ecr-perms" {

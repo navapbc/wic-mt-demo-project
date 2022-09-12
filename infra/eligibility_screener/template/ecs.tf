@@ -29,7 +29,7 @@ resource "aws_security_group" "allow-screener-traffic" {
 }
 
 data "aws_ecr_repository" "eligibility-screener-repository" {
-  name                 = "eligibility-screener-repo"
+  name = "eligibility-screener-repo"
 }
 data "aws_iam_policy_document" "ecr-perms" {
   statement {
