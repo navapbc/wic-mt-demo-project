@@ -117,7 +117,7 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
       logConfiguration = {
         logDriver = "awslogs",
         options = {
-          "awslogs-group"  = data.aws_cloudwatch_log_group.mock_api
+          "awslogs-group"  = "${data.aws_cloudwatch_log_group.mock_api}"
           "awslogs-region" = "us-east-1"
         }
       }
