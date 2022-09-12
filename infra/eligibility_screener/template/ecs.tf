@@ -12,18 +12,11 @@ resource "aws_security_group" "allow-screener-traffic" {
     cidr_blocks = ["0.0.0.0/8"]
   }
   ingress {
-    cidr_blocks      = ["0.0.0.0/0"]
-    description      = "Allow traffic from internet"
-    from_port        = 3000
-    to_port          = 3000
-    protocol         = "tcp"
-  }
-  ingress {
-    cidr_blocks      = ["172.31.0.0/16"]
-    description      = "HTTPS traffic from VPC"
-    from_port        = 443
-    protocol         = "tcp"
-    to_port          = 443
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow traffic from internet"
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
   }
   egress {
     description      = "allow all outbound traffic from screener"
@@ -71,7 +64,7 @@ resource "aws_ecs_cluster" "eligibility-screener-ecs-cluster" {
 }
 
 resource "aws_ecs_service" "eligibility-screener-ecs-service" {
-  name            = "${var.environment_name}-ecs-service"
+  name            = "${var.environment_name}-screener-service"
   cluster         = aws_ecs_cluster.eligibility-screener-ecs-cluster.id
   task_definition = aws_ecs_task_definition.eligibility-screener-ecs-task-definition.arn
   launch_type     = "FARGATE"

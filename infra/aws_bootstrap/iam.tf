@@ -24,13 +24,13 @@ data "aws_ecr_repository" "mock-api-repository" {
 }
 
 data "aws_ecs_service" "eligibility-screener-ecs-service" {
-  service_name = "${var.environment_name}-ecs-service"
-  cluster_arn = "arn:aws:ecs:us-east-1:546642427916:cluster/${var.environment_name}"
+  service_name = "${var.environment_name}-screener-service"
+  cluster_arn  = "arn:aws:ecs:us-east-1:546642427916:cluster/${var.environment_name}"
 }
 
 data "aws_ecs_service" "mock-api-ecs-service" {
   service_name = "${var.environment_name}-api-ecs-service"
-  cluster_arn = "arn:aws:ecs:us-east-1:546642427916:cluster/${var.environment_name}"
+  cluster_arn  = "arn:aws:ecs:us-east-1:546642427916:cluster/${var.environment_name}"
 }
 data "aws_ecs_cluster" "application-cluster" {
   cluster_name = var.environment_name
@@ -157,27 +157,27 @@ resource "aws_iam_user_policy_attachment" "deploy_action" {
 #
 # ----------------------------------------------------------
 
-resource "aws_iam_role" "rds_db_user" {
-  name = "rds-user"
-  
-}
+# resource "aws_iam_role" "rds_db_user" {
+#   name = "rds-user"
 
-resource "aws_iam_policy" "rds_policy" {
-  name = "rds-policy"
-  policy = ""
-}
+# }
 
-data "aws_iam_policy_document" "rds_policy"{
-  statement {
-    sid = "AllowRDSAccess"
-    actions =[
-      "rds:CreateDBInstance",
-      "rds:CreateDBSnapshot",
-      "rds:ModifyDBInstance"
-    ]
-    resources = []
-  }
-}
+# resource "aws_iam_policy" "rds_policy" {
+#   name   = "rds-policy"
+#   policy = ""
+# }
+
+# data "aws_iam_policy_document" "rds_policy" {
+#   statement {
+#     sid = "AllowRDSAccess"
+#     actions = [
+#       "rds:CreateDBInstance",
+#       "rds:CreateDBSnapshot",
+#       "rds:ModifyDBInstance"
+#     ]
+#     resources = []
+#   }
+# }
 # ----------------------------------------------------------
 # 
 # Identity connector for AWS
