@@ -6,7 +6,7 @@
 #   security_groups = [aws_security_group.allow-screener-traffic.id]
 # }
 # resource "aws_lb_listener" "screener" {
-  
+
 # }
 # security group for screener
 resource "aws_security_group" "allow-screener-traffic" {
