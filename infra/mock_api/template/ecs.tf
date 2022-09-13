@@ -122,6 +122,14 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
 #    ECS task to Handle CSVs
 #
 # ------------------------------------------------------------------------------
+# resource "aws_iam_role" "handle-csv" {
+#   name = "handle-csv-role"
+#   description = "allows an ECS task to generate CSVs and manage their storage"
+#   policy = data.aws_iam_policy_document.handle-csv
+# }
+# resource "aws_iam_role_policy" "handle-csv" {
+  # add s3 perms
+# }
 
 resource "aws_ecs_task_definition" "handle-csv" {
   family                   = "${var.environment_name}-csv-handler-definition"
@@ -129,6 +137,7 @@ resource "aws_ecs_task_definition" "handle-csv" {
   requires_compatibilities = ["FARGATE"]
   memory                   = "1024"
   cpu                      = "512"
+  # task_role_arn            =  aws_iam_role.handle-csv.arn
   execution_role_arn       = "arn:aws:iam::546642427916:role/wic-mt-task-executor"
   container_definitions = jsonencode([
     {
@@ -137,6 +146,7 @@ resource "aws_ecs_task_definition" "handle-csv" {
       memory    = 1024
       cpu       = 512
       essential = true
+      command   = ["poetry", "run", "create-eligibility-screener-csv"]
       portMappings = [
         {
           containerPort : 8080
@@ -149,20 +159,26 @@ resource "aws_ecs_task_definition" "handle-csv" {
         },
         initProcessEnabled = true
       }
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = {
+          "awslogs-group"         = "mock-api",
+          "awslogs-region"        = "us-east-1",
+          "awslogs-stream-prefix" = "${var.environment_name}"
+        }
+      }
     }
   ])
 }
 
-resource "aws_ecs_service" "name" {
+resource "aws_ecs_service" "handle_csv" {
   name            = "${var.environment_name}-csv-handler"
   cluster         = aws_ecs_cluster.mock-api-ecs-cluster.id
   task_definition = aws_ecs_task_definition.handle-csv.arn
   launch_type     = "FARGATE"
-  command         = "create-eligibility-screener-csv"
   network_configuration {
     subnets          = ["subnet-06b4ec8ff6311f69d"]
     assign_public_ip = true
-    security_groups  = [aws_security_group.handle-csv.id]
   }
   desired_count = 1
 
@@ -172,9 +188,3 @@ resource "aws_ecs_service" "name" {
   }
   force_new_deployment = true
 }
-
-# resource "aws_security_group" "handle-csv" {
-#   # this should be an internal group
-#   name = "csv_handler"
-#   description = "This may not be needed. This should correlate with a thask that handles csv generation."
-# }
