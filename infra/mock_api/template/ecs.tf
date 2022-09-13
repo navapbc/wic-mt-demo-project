@@ -88,17 +88,7 @@ resource "aws_security_group" "allow-api-traffic" {
     ipv6_cidr_blocks = ["::/0"]
   }
 }
-# add public ip to security group
 
-# todo: change container def to data block
-# todo: specify security group
-# use ur own ip for testing
-# resource aws_security_group
-# todo: specify resources for access under networking
-# todo: create ALB and autoscaling
-# todo: limit principals and resources to grant least privelege
-# todo: create plan to migrate all of this + infra in eligibility screener to one repo
-# todo: make decision on initial deploy. should users let it fail and then deploy again?
 resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
   family                   = "${var.environment_name}-ecs-task-definition"
   network_mode             = "awsvpc"
@@ -128,3 +118,63 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
     }
   ])
 }
+# ------------------------------------------------------------------------------
+#    ECS task to Handle CSVs
+#
+# ------------------------------------------------------------------------------
+
+resource "aws_ecs_task_definition" "handle-csv" {
+  family                   = "${var.environment_name}-csv-handler-definition"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  memory                   = "1024"
+  cpu                      = "512"
+  execution_role_arn       = "arn:aws:iam::546642427916:role/wic-mt-task-executor"
+  container_definitions = jsonencode([
+    {
+      name      = "${var.environment_name}-mock-api-container"
+      image     = "546642427916.dkr.ecr.us-east-1.amazonaws.com/mock-api-repo:latest"
+      memory    = 1024
+      cpu       = 512
+      essential = true
+      portMappings = [
+        {
+          containerPort : 8080
+        }
+      ]
+      readonlyRootFilesystem = true
+      linuxParameters = {
+        capabilities = {
+          drop = ["ALL"]
+        },
+        initProcessEnabled = true
+      }
+    }
+  ])
+}
+
+resource "aws_ecs_service" "name" {
+  name            = "${var.environment_name}-csv-handler"
+  cluster         = aws_ecs_cluster.mock-api-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.handle-csv.arn
+  launch_type     = "FARGATE"
+  command         = "create-eligibility-screener-csv"
+  network_configuration {
+    subnets          = ["subnet-06b4ec8ff6311f69d"]
+    assign_public_ip = true
+    security_groups  = [aws_security_group.handle-csv.id]
+  }
+  desired_count = 1
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+  force_new_deployment = true
+}
+
+# resource "aws_security_group" "handle-csv" {
+#   # this should be an internal group
+#   name = "csv_handler"
+#   description = "This may not be needed. This should correlate with a thask that handles csv generation."
+# }
