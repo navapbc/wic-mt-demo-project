@@ -28,36 +28,6 @@ resource "aws_security_group" "allow-screener-traffic" {
   }
 }
 
-data "aws_ecr_repository" "eligibility-screener-repository" {
-  name = "eligibility-screener-repo"
-}
-data "aws_iam_policy_document" "ecr-perms" {
-  statement {
-    sid = "ECRPerms"
-    actions = [
-      "ecr:BatchCheckLayerAvailability",
-      "ecr:BatchGetImage",
-      "ecr:CompleteLayerUpload",
-      "ecr:GetDownloadUrlForLayer",
-      "ecr:GetLifecyclePolicy",
-      "ecr:InitiateLayerUpload",
-      "ecr:PutImage",
-      "ecr:UploadLayerPart"
-    ]
-    effect = "Allow"
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
-    }
-  }
-}
-
-resource "aws_ecr_repository_policy" "eligibility-screener-repo-policy" {
-  repository = data.aws_ecr_repository.eligibility-screener-repository.name
-  policy     = data.aws_iam_policy_document.ecr-perms.json
-}
-# create a github and a user assume role for the principals ^
-
 resource "aws_ecs_cluster" "eligibility-screener-ecs-cluster" {
   name = var.environment_name
 }

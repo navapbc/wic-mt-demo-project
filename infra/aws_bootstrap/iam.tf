@@ -2,29 +2,6 @@
 
 # ----------------------------------------------------------
 # 
-# IAM Roles for Users
-#
-# ----------------------------------------------------------
-
-# resource "aws_iam_role" "wic_mt_dev" {
-
-# }
-
-# ----------------------------------------------------------
-# 
-# data attributes for managed resources
-#
-# ----------------------------------------------------------
-data "aws_ecr_repository" "eligibility-screener-repository" {
-  name = "eligibility-screener-repo"
-}
-
-data "aws_ecr_repository" "mock-api-repository" {
-  name = "mock-api-repo"
-}
-
-# ----------------------------------------------------------
-# 
 # IAM Roles for FARGATE
 #
 # ----------------------------------------------------------
@@ -117,8 +94,8 @@ data "aws_iam_policy_document" "deploy_action" {
     resources = [
       "arn:aws:ecs:us-east-1:546642427916:service/${var.environment_name}/*",
       "arn:aws:ecs:us-east-1:546642427916:cluster/${var.environment_name}",
-      data.aws_ecr_repository.eligibility-screener-repository.arn,
-      data.aws_ecr_repository.mock-api-repository.arn
+      aws_ecr_repository.eligibility-screener-repository.arn,
+      aws_ecr_repository.mock-api-repository.arn
     ]
   }
   statement {
@@ -180,3 +157,33 @@ resource "aws_iam_user_policy_attachment" "deploy_action" {
 #   client_id_list = ["sts.amazonaws.com"]
 #   thumbprint_list = []
 # }
+# ----------------------------------------------------------
+# 
+# ECR Perms
+#
+# ----------------------------------------------------------
+data "aws_iam_policy_document" "ecr-perms" {
+  statement {
+    sid = "ECRPerms"
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:BatchGetImage",
+      "ecr:CompleteLayerUpload",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:GetLifecyclePolicy",
+      "ecr:InitiateLayerUpload",
+      "ecr:PutImage",
+      "ecr:UploadLayerPart"
+    ]
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+  }
+}
+
+resource "aws_ecr_repository_policy" "eligibility-screener-repo-policy" {
+  repository = aws_ecr_repository.eligibility-screener-repository.name
+  policy     = data.aws_iam_policy_document.ecr-perms.json
+}
