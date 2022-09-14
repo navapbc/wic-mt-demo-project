@@ -82,7 +82,7 @@ resource "aws_ecs_service" "eligibility-screener-ecs-service" {
 }
 
 resource "aws_ecs_task_definition" "eligibility-screener-ecs-task-definition" {
-  family                   = "${var.environment_name}-ecs-task-definition"
+  family                   = "${var.environment_name}-screener-task-definition"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   memory                   = "1024"
