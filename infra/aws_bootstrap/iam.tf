@@ -2,17 +2,6 @@
 
 # ----------------------------------------------------------
 # 
-# IAM Roles for Users
-#
-# ----------------------------------------------------------
-
-# resource "aws_iam_role" "wic_mt_dev" {
-
-# }
-
-
-# ----------------------------------------------------------
-# 
 # IAM Roles for FARGATE
 #
 # ----------------------------------------------------------
@@ -102,9 +91,11 @@ data "aws_iam_policy_document" "deploy_action" {
   statement {
     sid     = "WICUpdateECR"
     actions = ["ecs:UpdateCluster", "ecs:UpdateService", "ecr:*"]
-    resources = [aws_ecs_cluster.eligibility-screener-ecs-cluster.arn,
+    resources = [
+      "arn:aws:ecs:us-east-1:546642427916:service/${var.environment_name}/*",
+      "arn:aws:ecs:us-east-1:546642427916:cluster/${var.environment_name}",
       aws_ecr_repository.eligibility-screener-repository.arn,
-      aws_ecs_service.eligibility-screener-ecs-service.id
+      aws_ecr_repository.mock-api-repository.arn
     ]
   }
   statement {
@@ -115,7 +106,7 @@ data "aws_iam_policy_document" "deploy_action" {
 }
 
 resource "aws_iam_policy" "deploy_action" {
-  name   = "wic-mt-deploy"
+  name   = "${var.environment_name}-wic-mt-deploy"
   policy = data.aws_iam_policy_document.deploy_action.json
 }
 
@@ -124,6 +115,33 @@ resource "aws_iam_user_policy_attachment" "deploy_action" {
   policy_arn = aws_iam_policy.deploy_action.arn
 }
 
+# ----------------------------------------------------------
+# 
+# IAM Roles for RDS
+#
+# ----------------------------------------------------------
+
+# resource "aws_iam_role" "rds_db_user" {
+#   name = "rds-user"
+
+# }
+
+# resource "aws_iam_policy" "rds_policy" {
+#   name   = "rds-policy"
+#   policy = ""
+# }
+
+# data "aws_iam_policy_document" "rds_policy" {
+#   statement {
+#     sid = "AllowRDSAccess"
+#     actions = [
+#       "rds:CreateDBInstance",
+#       "rds:CreateDBSnapshot",
+#       "rds:ModifyDBInstance"
+#     ]
+#     resources = []
+#   }
+# }
 # ----------------------------------------------------------
 # 
 # Identity connector for AWS
@@ -139,3 +157,33 @@ resource "aws_iam_user_policy_attachment" "deploy_action" {
 #   client_id_list = ["sts.amazonaws.com"]
 #   thumbprint_list = []
 # }
+# ----------------------------------------------------------
+# 
+# ECR Perms
+#
+# ----------------------------------------------------------
+data "aws_iam_policy_document" "ecr-perms" {
+  statement {
+    sid = "ECRPerms"
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:BatchGetImage",
+      "ecr:CompleteLayerUpload",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:GetLifecyclePolicy",
+      "ecr:InitiateLayerUpload",
+      "ecr:PutImage",
+      "ecr:UploadLayerPart"
+    ]
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+  }
+}
+
+resource "aws_ecr_repository_policy" "eligibility-screener-repo-policy" {
+  repository = aws_ecr_repository.eligibility-screener-repository.name
+  policy     = data.aws_iam_policy_document.ecr-perms.json
+}
