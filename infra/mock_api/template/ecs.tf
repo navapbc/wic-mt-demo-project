@@ -1,9 +1,5 @@
-# fargate config goes in this file
-# create service and schedule (optional)
-
-resource "aws_ecr_repository" "mock-api-repository" {
-  name                 = "mock-api-repo"
-  image_tag_mutability = "MUTABLE"
+data "aws_ecr_repository" "mock-api-repository" {
+  name = "mock-api-repo"
 }
 
 data "aws_iam_policy_document" "ecr-perms" {
@@ -28,7 +24,7 @@ data "aws_iam_policy_document" "ecr-perms" {
 }
 
 resource "aws_ecr_repository_policy" "mock-api-repo-policy" {
-  repository = aws_ecr_repository.mock-api-repository.name
+  repository = data.aws_ecr_repository.mock-api-repository.name
   policy     = data.aws_iam_policy_document.ecr-perms.json
 }
 # create a github and a user assume role for the principals ^
@@ -96,7 +92,7 @@ data "aws_cloudwatch_log_group" "mock_api" {
   name = "mock-api"
 }
 resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
-  family                   = "${var.environment_name}-ecs-task-definition"
+  family                   = "${var.environment_name}-api-task-definition"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   memory                   = "1024"
