@@ -29,10 +29,23 @@ data "aws_iam_policy_document" "access_ecr_policy" {
       "ecr:GetAuthorizationToken",
       "ecr:BatchCheckLayerAvailability",
       "ecr:GetDownloadUrlForLayer",
-      "ecr:BatchGetImage",
-      "logs:CreateLogStream",
-    "logs:PutLogEvents"]
+      "ecr:BatchGetImage"
+    ]
     resources = ["*"]
+  }
+  statement {
+    sid = "AllowLogs"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "logs:DescribeLogStreams"
+    ]
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:logs:*:*:*"]
+    }
   }
 }
 

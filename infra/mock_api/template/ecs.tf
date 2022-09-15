@@ -88,12 +88,9 @@ resource "aws_security_group" "allow-api-traffic" {
 
 # todo: change container def to data block
 # todo: specify security group
-# use ur own ip for testing
-# resource aws_security_group
-# todo: specify resources for access under networking
-# todo: create ALB and autoscaling
-# todo: limit principals and resources to grant least privelege
-
+data "aws_cloudwatch_log_group" "mock_api" {
+  name = "mock-api"
+}
 resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
   family                   = "${var.environment_name}-api-task-definition"
   network_mode             = "awsvpc"
@@ -112,7 +109,14 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
         {
           containerPort : 8080
         }
-      ]
+      ],
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = {
+          "awslogs-group"  = "${data.aws_cloudwatch_log_group.mock_api}"
+          "awslogs-region" = "us-east-1"
+        }
+      }
       readonlyRootFilesystem = true
       linuxParameters = {
         capabilities = {

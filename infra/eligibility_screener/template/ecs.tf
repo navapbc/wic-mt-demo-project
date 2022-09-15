@@ -50,7 +50,9 @@ resource "aws_ecs_service" "eligibility-screener-ecs-service" {
   }
   force_new_deployment = true
 }
-
+data "aws_cloudwatch_log_group" "eligibility_screener" {
+  name = "screener"
+}
 resource "aws_ecs_task_definition" "eligibility-screener-ecs-task-definition" {
   family                   = "${var.environment_name}-screener-task-definition"
   network_mode             = "awsvpc"
@@ -69,7 +71,14 @@ resource "aws_ecs_task_definition" "eligibility-screener-ecs-task-definition" {
         {
           containerPort : 8080
         }
-      ]
+      ],
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = {
+          "awslogs-group"  = "${data.aws_cloudwatch_log_group.eligibility_screener}"
+          "awslogs-region" = "us-east-1"
+        }
+      }
     }
   ])
 }
