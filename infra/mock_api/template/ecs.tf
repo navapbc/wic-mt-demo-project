@@ -1,9 +1,5 @@
-# fargate config goes in this file
-# create service and schedule (optional)
-
-resource "aws_ecr_repository" "mock-api-repository" {
-  name                 = "mock-api-repo"
-  image_tag_mutability = "MUTABLE"
+data "aws_ecr_repository" "mock-api-repository" {
+  name = "mock-api-repo"
 }
 
 data "aws_iam_policy_document" "ecr-perms" {
@@ -28,7 +24,7 @@ data "aws_iam_policy_document" "ecr-perms" {
 }
 
 resource "aws_ecr_repository_policy" "mock-api-repo-policy" {
-  repository = aws_ecr_repository.mock-api-repository.name
+  repository = data.aws_ecr_repository.mock-api-repository.name
   policy     = data.aws_iam_policy_document.ecr-perms.json
 }
 # create a github and a user assume role for the principals ^
@@ -89,12 +85,18 @@ resource "aws_security_group" "allow-api-traffic" {
   }
 }
 
+# todo: change container def to data block
+# todo: specify security group
+data "aws_cloudwatch_log_group" "mock_api" {
+  name = "mock-api"
+}
 resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
-  family                   = "${var.environment_name}-ecs-task-definition"
+  family                   = "${var.environment_name}-api-task-definition"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   memory                   = "1024"
   cpu                      = "512"
+  # task_role_arn            =  aws_iam_role.handle-csv.arn
   execution_role_arn       = "arn:aws:iam::546642427916:role/wic-mt-task-executor"
   container_definitions = jsonencode([
     {
@@ -103,17 +105,33 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
       memory    = 1024
       cpu       = 512
       essential = true
+      command   = ["poetry", "run", "create-eligibility-screener-csv"]
       portMappings = [
         {
           containerPort : 8080
         }
-      ]
+      ],
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = {
+          "awslogs-group"  = "${data.aws_cloudwatch_log_group.mock_api}"
+          "awslogs-region" = "us-east-1"
+        }
+      }
       readonlyRootFilesystem = true
       linuxParameters = {
         capabilities = {
           drop = ["ALL"]
         },
         initProcessEnabled = true
+      }
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = {
+          "awslogs-group"         = "mock-api",
+          "awslogs-region"        = "us-east-1",
+          "awslogs-stream-prefix" = "${var.environment_name}"
+        }
       }
     }
   ])
@@ -169,6 +187,24 @@ resource "aws_ecs_task_definition" "handle-csv" {
       }
     }
   ])
+}
+
+resource "aws_ecs_service" "handle_csv" {
+  name            = "${var.environment_name}-csv-handler"
+  cluster         = aws_ecs_cluster.mock-api-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.handle-csv.arn
+  launch_type     = "FARGATE"
+  network_configuration {
+    subnets          = ["subnet-06b4ec8ff6311f69d"]
+    assign_public_ip = true
+  }
+  desired_count = 1
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+  force_new_deployment = true
 }
 
 resource "aws_ecs_service" "handle_csv" {

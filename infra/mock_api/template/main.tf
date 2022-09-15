@@ -31,6 +31,7 @@ data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
 
+# define env vars here!
 
 # Things you need for each environment:
 # logging per env
