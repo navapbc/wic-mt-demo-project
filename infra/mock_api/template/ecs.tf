@@ -58,7 +58,7 @@ resource "aws_security_group" "allow-api-traffic" {
   vpc_id      = module.constants.vpc_id
 
   ingress {
-    description = "Allow traffic from screener"
+    description = "Allow HTTPS traffic"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
@@ -76,23 +76,13 @@ resource "aws_security_group" "allow-api-traffic" {
   }
 
   egress {
-    description      = "allow all outbound traffic from screener"
+    description      = "allow all outbound traffic"
     from_port        = 0
     to_port          = 0
     protocol         = "-1"
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
-}
-resource "aws_security_group_rule" "allow-api-rds" {
-
-    description = "outbound to rds"
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    type        = "egress"
-    security_group_id = "${aws_security_group.allow-api-traffic.id}"
-    source_security_group_id = "${aws_security_group.handle-csv.id}"
 }
 
 # todo: change container def to data block
@@ -165,8 +155,23 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
 #   policy = data.aws_iam_policy_document.handle-csv
 # }
 # resource "aws_iam_role_policy" "handle-csv" {
-  # add s3 perms
+  # add s3 perms (read, write, list)
+  # read rds?
 # }
+
+resource "aws_security_group" "rds"{
+  description = "allows connections to RDS"
+  name = "rds-instance"
+  vpc_id = module.constants.vpc_id
+
+  ingress {
+    from_port = 5432
+    to_port = 5432
+    protocol = "tcp"
+    security_groups = ["${aws_security_group.allow-api-traffic.id}", "${aws_security_group.handle-csv.id}"]
+  }
+
+}
 resource "aws_security_group" "handle-csv"{
   description = "allows internal connections"
   name = "csv-handler"
@@ -208,7 +213,7 @@ resource "aws_ecs_task_definition" "handle-csv" {
           containerPort : 8080
         }
       ]
-      readonlyRootFilesystem = true
+      # readonlyRootFilesystem = true
       linuxParameters = {
         capabilities = {
           drop = ["ALL"]
@@ -245,23 +250,25 @@ resource "aws_ecs_task_definition" "handle-csv" {
   ])
 }
 
-resource "aws_ecs_service" "handle_csv" {
-  name            = "${var.environment_name}-csv-handler"
-  cluster         = aws_ecs_cluster.mock-api-ecs-cluster.id
-  task_definition = aws_ecs_task_definition.handle-csv.arn
-  launch_type     = "FARGATE"
-  network_configuration {
-    subnets          = ["subnet-06b4ec8ff6311f69d"]
-    assign_public_ip = true
-  }
-  desired_count = 1
+# removing the service because it doesn't need to run continually
+# resource "aws_ecs_service" "handle_csv" {
+#   name            = "${var.environment_name}-csv-handler"
+#   cluster         = aws_ecs_cluster.mock-api-ecs-cluster.id
+#   task_definition = aws_ecs_task_definition.handle-csv.arn
+#   launch_type     = "FARGATE"
+#   network_configuration {
+#     subnets          = ["subnet-06b4ec8ff6311f69d"]
+#     assign_public_ip = true
+#     security_groups = ["${aws_security_group.handle-csv.id}"]
+#   }
+#   desired_count = 1
 
-  deployment_circuit_breaker {
-    enable   = true
-    rollback = true
-  }
-  force_new_deployment = true
-}
+#   deployment_circuit_breaker {
+#     enable   = true
+#     rollback = true
+#   }
+#   force_new_deployment = true
+# }
 
 # private subnet????
 # connect aws public and private instances 
@@ -283,12 +290,13 @@ resource "aws_db_instance" "mock_api_db" {
   identifier           = "${var.environment_name}-wic-mt"
   allocated_storage    = 20
   engine               = "postgres"
-  engine_version       = "13.3"
-  instance_class       = "db.t3.micro" # figure out what to put here
+  engine_version       = "13.7"
+  instance_class       = "db.t3.micro" 
   db_name              = "main"
+  port                 = 5432 
   enabled_cloudwatch_logs_exports = ["postgresql"]
   apply_immediately    = true
-  vpc_security_group_ids = ["${aws_security_group.handle-csv.id}"]
+  vpc_security_group_ids = ["${aws_security_group.rds.id}"]
   username             = "${data.aws_ssm_parameter.db_username.value}" 
   password             = "${data.aws_ssm_parameter.db_pw.value}" 
 }
