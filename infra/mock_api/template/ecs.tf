@@ -27,7 +27,7 @@ resource "aws_ecr_repository_policy" "mock-api-repo-policy" {
   repository = data.aws_ecr_repository.mock-api-repository.name
   policy     = data.aws_iam_policy_document.ecr-perms.json
 }
-# create a github and a user assume role for the principals ^
+
 
 resource "aws_ecs_cluster" "mock-api-ecs-cluster" {
   name = var.environment_name
@@ -85,8 +85,6 @@ resource "aws_security_group" "allow-api-traffic" {
   }
 }
 
-# todo: change container def to data block
-# todo: specify security group
 data "aws_cloudwatch_log_group" "mock_api" {
   name = "mock-api"
 }
@@ -159,19 +157,6 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
   # read rds?
 # }
 
-resource "aws_security_group" "rds"{
-  description = "allows connections to RDS"
-  name = "rds-instance"
-  vpc_id = module.constants.vpc_id
-
-  ingress {
-    from_port = 5432
-    to_port = 5432
-    protocol = "tcp"
-    security_groups = ["${aws_security_group.allow-api-traffic.id}", "${aws_security_group.handle-csv.id}"]
-  }
-
-}
 resource "aws_security_group" "handle-csv"{
   description = "allows internal connections"
   name = "csv-handler"
@@ -213,7 +198,6 @@ resource "aws_ecs_task_definition" "handle-csv" {
           containerPort : 8080
         }
       ]
-      # readonlyRootFilesystem = true
       linuxParameters = {
         capabilities = {
           drop = ["ALL"]
@@ -251,52 +235,3 @@ resource "aws_ecs_task_definition" "handle-csv" {
 }
 
 # removing the service because it doesn't need to run continually
-# resource "aws_ecs_service" "handle_csv" {
-#   name            = "${var.environment_name}-csv-handler"
-#   cluster         = aws_ecs_cluster.mock-api-ecs-cluster.id
-#   task_definition = aws_ecs_task_definition.handle-csv.arn
-#   launch_type     = "FARGATE"
-#   network_configuration {
-#     subnets          = ["subnet-06b4ec8ff6311f69d"]
-#     assign_public_ip = true
-#     security_groups = ["${aws_security_group.handle-csv.id}"]
-#   }
-#   desired_count = 1
-
-#   deployment_circuit_breaker {
-#     enable   = true
-#     rollback = true
-#   }
-#   force_new_deployment = true
-# }
-
-# private subnet????
-# connect aws public and private instances 
-
-# managed in the console!
-data "aws_ssm_parameter" "db_username"{
-  name = "POSTGRES_USER"
-}
-data "aws_ssm_parameter" "db_pw"{
-  name = "POSTGRES_PASSWORD"
-}
-data "aws_ssm_parameter" "db"{
-  name = "POSTGRES_DB"
-}
-data "aws_ssm_parameter" "db_host"{
-  name = "DB_HOST"
-}
-resource "aws_db_instance" "mock_api_db" {
-  identifier           = "${var.environment_name}-wic-mt"
-  allocated_storage    = 20
-  engine               = "postgres"
-  engine_version       = "13.7"
-  instance_class       = "db.t3.micro" 
-  db_name              = "main"
-  port                 = 5432 
-  enabled_cloudwatch_logs_exports = ["postgresql"]
-  apply_immediately    = true
-  vpc_security_group_ids = ["${aws_security_group.rds.id}"]
-  username             = "${data.aws_ssm_parameter.db_username.value}" 
-  password             = "${data.aws_ssm_parameter.db_pw.value}" 
-}
