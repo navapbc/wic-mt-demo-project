@@ -114,22 +114,22 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
         },
         initProcessEnabled = true
       }
-      environment:[
+      environment : [
         {
-          "name": "POSTGRES_USER"
-          "value": "${data.aws_ssm_parameter.db_username.value}"
+          "name" : "POSTGRES_USER"
+          "value" : "${data.aws_ssm_parameter.db_username.value}"
         },
         {
-          "name": "POSTGRES_PASSWORD"
-          "value": "${data.aws_ssm_parameter.db_pw.value}"
+          "name" : "POSTGRES_PASSWORD"
+          "value" : "${data.aws_ssm_parameter.db_pw.value}"
         },
         {
-          "name": "POSTGRES_DB"
-          "value": "${data.aws_ssm_parameter.db.value}"
+          "name" : "POSTGRES_DB"
+          "value" : "${data.aws_ssm_parameter.db.value}"
         },
         {
-          "name": "DB_HOST"
-          "value": "test-wic-mt.cfsgsglh2mrn.us-east-1.rds.amazonaws.com"
+          "name" : "DB_HOST"
+          "value" : "test-wic-mt.cfsgsglh2mrn.us-east-1.rds.amazonaws.com"
         }
       ]
       logConfiguration = {
@@ -153,19 +153,19 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
 #   policy = data.aws_iam_policy_document.handle-csv
 # }
 # resource "aws_iam_role_policy" "handle-csv" {
-  # add s3 perms (read, write, list)
-  # read rds?
+# add s3 perms (read, write, list)
+# read rds?
 # }
 
-resource "aws_security_group" "handle-csv"{
+resource "aws_security_group" "handle-csv" {
   description = "allows internal connections"
-  name = "csv-handler"
-  vpc_id = module.constants.vpc_id
+  name        = "csv-handler"
+  vpc_id      = module.constants.vpc_id
 
   ingress {
-    from_port = 5432
-    to_port = 5432
-    protocol = "tcp"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.allow-api-traffic.id}"]
   }
   egress {
@@ -184,7 +184,7 @@ resource "aws_ecs_task_definition" "handle-csv" {
   memory                   = "1024"
   cpu                      = "512"
   # task_role_arn            =  aws_iam_role.handle-csv.arn
-  execution_role_arn       = "arn:aws:iam::546642427916:role/wic-mt-task-executor"
+  execution_role_arn = "arn:aws:iam::546642427916:role/wic-mt-task-executor"
   container_definitions = jsonencode([
     {
       name      = "${var.environment_name}-mock-api-container"
@@ -204,22 +204,22 @@ resource "aws_ecs_task_definition" "handle-csv" {
         },
         initProcessEnabled = true
       }
-      environment:[
+      environment : [
         {
-          "name": "POSTGRES_USER"
-          "value": "${data.aws_ssm_parameter.db_username.value}"
+          "name" : "POSTGRES_USER"
+          "value" : "${data.aws_ssm_parameter.db_username.value}"
         },
         {
-          "name": "POSTGRES_PASSWORD"
-          "value": "${data.aws_ssm_parameter.db_pw.value}"
+          "name" : "POSTGRES_PASSWORD"
+          "value" : "${data.aws_ssm_parameter.db_pw.value}"
         },
         {
-          "name": "POSTGRES_DB"
-          "value": "${data.aws_ssm_parameter.db.value}"
+          "name" : "POSTGRES_DB"
+          "value" : "${data.aws_ssm_parameter.db.value}"
         },
         {
-          "name": "DB_HOST"
-          "value": "test-wic-mt.cfsgsglh2mrn.us-east-1.rds.amazonaws.com"
+          "name" : "DB_HOST"
+          "value" : "test-wic-mt.cfsgsglh2mrn.us-east-1.rds.amazonaws.com"
         }
       ]
       logConfiguration = {
