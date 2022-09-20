@@ -6,7 +6,6 @@ provider "aws" {
   region  = "us-east-1"
   profile = "wic-mt"
 }
-# s3 backend moved so that terraform won't ignore it
 
 terraform {
   required_version = "1.2.0"

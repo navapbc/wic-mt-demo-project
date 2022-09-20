@@ -42,10 +42,7 @@ data "aws_iam_policy_document" "access_ecr_policy" {
       "logs:DescribeLogStreams"
     ]
     effect = "Allow"
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:logs:*:*:*"]
-    }
+    resources = ["*"]
   }
 }
 

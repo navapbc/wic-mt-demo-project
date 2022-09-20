@@ -69,8 +69,8 @@ resource "aws_security_group" "allow-api-traffic" {
   # This is for testing purposes ONLY
   ingress {
     description = "Allow all traffic for testing"
-    from_port   = 8080
-    to_port     = 8080
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -116,6 +116,10 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
       }
       environment : [
         {
+          "name": "ENVIRONMENT"
+          "value": "${var.environment_name}"
+        },
+        {
           "name" : "POSTGRES_USER"
           "value" : "${data.aws_ssm_parameter.db_username.value}"
         },
@@ -125,11 +129,11 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
         },
         {
           "name" : "POSTGRES_DB"
-          "value" : "${data.aws_ssm_parameter.db.value}"
+          "value" : "${aws_db_instance.mock_api_db.name}"
         },
         {
           "name" : "DB_HOST"
-          "value" : "test-wic-mt.cfsgsglh2mrn.us-east-1.rds.amazonaws.com"
+          "value" : "${aws_db_instance.mock_api_db.address}"
         }
       ]
       logConfiguration = {
@@ -147,15 +151,46 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
 #    ECS task to Handle CSVs
 #
 # ------------------------------------------------------------------------------
-# resource "aws_iam_role" "handle-csv" {
-#   name = "handle-csv-role"
-#   description = "allows an ECS task to generate CSVs and manage their storage"
-#   policy = data.aws_iam_policy_document.handle-csv
-# }
-# resource "aws_iam_role_policy" "handle-csv" {
-# add s3 perms (read, write, list)
-# read rds?
-# }
+
+data "aws_iam_policy_document" "task_assume_role_policy" {
+  statement {
+    sid = "ECSTaskExecution"
+    actions = [
+      "sts:AssumeRole"
+    ]
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+  }
+}
+resource "aws_iam_role" "handle-csv" {
+  name = "handle-csv-role"
+  description = "allows an ECS task to generate CSVs and manage their storage"
+  assume_role_policy = data.aws_iam_policy_document.task_assume_role_policy.json
+}
+resource "aws_iam_role_policy_attachment" "handle-csv" {
+  policy_arn = aws_iam_policy.handle-csv.arn
+  role       = aws_iam_role.handle-csv.name
+}
+resource "aws_iam_policy" "handle-csv" {
+  name = "handle-csv"
+  policy = data.aws_iam_policy_document.handle-csv.json
+}
+data "aws_iam_policy_document" "handle-csv" {
+  statement {
+    sid    = "AllowListBucket"
+    effect = "Allow"
+    actions = [
+      "s3:GetBucketLocation",
+      "s3:GetObject",
+      "s3:ListBucket",
+      "s3:PutObject"
+    ]
+    resources = ["${aws_s3_bucket.wic-mt-csv-files.arn}", "${aws_s3_bucket.wic-mt-csv-files.arn}/*"]
+  }
+}
 
 resource "aws_security_group" "handle-csv" {
   description = "allows internal connections"
@@ -183,7 +218,7 @@ resource "aws_ecs_task_definition" "handle-csv" {
   requires_compatibilities = ["FARGATE"]
   memory                   = "1024"
   cpu                      = "512"
-  # task_role_arn            =  aws_iam_role.handle-csv.arn
+  task_role_arn            =  aws_iam_role.handle-csv.arn
   execution_role_arn = "arn:aws:iam::546642427916:role/wic-mt-task-executor"
   container_definitions = jsonencode([
     {
@@ -206,6 +241,10 @@ resource "aws_ecs_task_definition" "handle-csv" {
       }
       environment : [
         {
+          "name": "ENVIRONMENT"
+          "value": "${var.environment_name}"
+        },
+        {
           "name" : "POSTGRES_USER"
           "value" : "${data.aws_ssm_parameter.db_username.value}"
         },
@@ -215,11 +254,15 @@ resource "aws_ecs_task_definition" "handle-csv" {
         },
         {
           "name" : "POSTGRES_DB"
-          "value" : "${data.aws_ssm_parameter.db.value}"
+          "value" : "${aws_db_instance.mock_api_db.name}"
         },
         {
           "name" : "DB_HOST"
-          "value" : "test-wic-mt.cfsgsglh2mrn.us-east-1.rds.amazonaws.com"
+          "value" : "${aws_db_instance.mock_api_db.address}"
+        },
+        {
+          "name": "ELIGIBILITY_SCREENER_CSV_OUTPUT_PATH"
+          "value": "s3://${aws_s3_bucket.wic-mt-csv-files.id}"
         }
       ]
       logConfiguration = {
@@ -233,5 +276,3 @@ resource "aws_ecs_task_definition" "handle-csv" {
     }
   ])
 }
-
-# removing the service because it doesn't need to run continually
