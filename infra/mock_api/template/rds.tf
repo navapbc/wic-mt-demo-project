@@ -1,6 +1,6 @@
 resource "aws_security_group" "rds" {
   description = "allows connections to RDS"
-  name        = "rds-instance"
+  name        = "mock-api-${var.environment_name}-rds-instance"
   vpc_id      = module.constants.vpc_id
 
   ingress {
@@ -17,6 +17,9 @@ resource "aws_security_group" "rds" {
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_db_instance" "mock_api_db" {
@@ -30,6 +33,7 @@ resource "aws_db_instance" "mock_api_db" {
   enabled_cloudwatch_logs_exports = ["postgresql"]
   apply_immediately               = true
   deletion_protection             = true
+  storage_encrypted               = true
   vpc_security_group_ids          = ["${aws_security_group.rds.id}"]
   username                        = data.aws_ssm_parameter.db_username.value
   password                        = data.aws_ssm_parameter.db_pw.value
