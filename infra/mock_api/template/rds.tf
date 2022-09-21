@@ -22,7 +22,7 @@ resource "aws_db_instance" "mock_api_db" {
   port                            = 5432
   enabled_cloudwatch_logs_exports = ["postgresql"]
   apply_immediately               = true
-  deletion_protection = true
+  deletion_protection             = true
   vpc_security_group_ids          = ["${aws_security_group.rds.id}"]
   username                        = data.aws_ssm_parameter.db_username.value
   password                        = data.aws_ssm_parameter.db_pw.value

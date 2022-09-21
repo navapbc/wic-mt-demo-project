@@ -41,7 +41,7 @@ data "aws_iam_policy_document" "access_ecr_policy" {
       "logs:PutLogEvents",
       "logs:DescribeLogStreams"
     ]
-    effect = "Allow"
+    effect    = "Allow"
     resources = ["*"]
   }
 }

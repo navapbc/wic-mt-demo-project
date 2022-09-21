@@ -1,6 +1,6 @@
 # bucket for generated csv files
 resource "aws_s3_bucket" "wic-mt-csv-files" {
-  bucket = "${var.environment_name}-api-csv-bucket"
+  bucket        = "${var.environment_name}-api-csv-bucket"
   force_destroy = true
 }
 # encrypt data

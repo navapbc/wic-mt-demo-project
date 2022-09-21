@@ -116,8 +116,8 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
       }
       environment : [
         {
-          "name": "ENVIRONMENT"
-          "value": "${var.environment_name}"
+          "name" : "ENVIRONMENT"
+          "value" : "${var.environment_name}"
         },
         {
           "name" : "POSTGRES_USER"
@@ -166,8 +166,8 @@ data "aws_iam_policy_document" "task_assume_role_policy" {
   }
 }
 resource "aws_iam_role" "handle-csv" {
-  name = "handle-csv-role"
-  description = "allows an ECS task to generate CSVs and manage their storage"
+  name               = "handle-csv-role"
+  description        = "allows an ECS task to generate CSVs and manage their storage"
   assume_role_policy = data.aws_iam_policy_document.task_assume_role_policy.json
 }
 resource "aws_iam_role_policy_attachment" "handle-csv" {
@@ -175,7 +175,7 @@ resource "aws_iam_role_policy_attachment" "handle-csv" {
   role       = aws_iam_role.handle-csv.name
 }
 resource "aws_iam_policy" "handle-csv" {
-  name = "handle-csv"
+  name   = "handle-csv"
   policy = data.aws_iam_policy_document.handle-csv.json
 }
 data "aws_iam_policy_document" "handle-csv" {
@@ -218,8 +218,8 @@ resource "aws_ecs_task_definition" "handle-csv" {
   requires_compatibilities = ["FARGATE"]
   memory                   = "1024"
   cpu                      = "512"
-  task_role_arn            =  aws_iam_role.handle-csv.arn
-  execution_role_arn = "arn:aws:iam::546642427916:role/wic-mt-task-executor"
+  task_role_arn            = aws_iam_role.handle-csv.arn
+  execution_role_arn       = "arn:aws:iam::546642427916:role/wic-mt-task-executor"
   container_definitions = jsonencode([
     {
       name      = "${var.environment_name}-mock-api-container"
@@ -241,8 +241,8 @@ resource "aws_ecs_task_definition" "handle-csv" {
       }
       environment : [
         {
-          "name": "ENVIRONMENT"
-          "value": "${var.environment_name}"
+          "name" : "ENVIRONMENT"
+          "value" : "${var.environment_name}"
         },
         {
           "name" : "POSTGRES_USER"
@@ -261,8 +261,8 @@ resource "aws_ecs_task_definition" "handle-csv" {
           "value" : "${aws_db_instance.mock_api_db.address}"
         },
         {
-          "name": "ELIGIBILITY_SCREENER_CSV_OUTPUT_PATH"
-          "value": "s3://${aws_s3_bucket.wic-mt-csv-files.id}"
+          "name" : "ELIGIBILITY_SCREENER_CSV_OUTPUT_PATH"
+          "value" : "s3://${aws_s3_bucket.wic-mt-csv-files.id}"
         }
       ]
       logConfiguration = {
