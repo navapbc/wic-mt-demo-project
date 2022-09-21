@@ -137,6 +137,10 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
         {
           "name" : "DB_HOST"
           "value" : "${aws_db_instance.mock_api_db.address}"
+        },
+        {
+          "name" : "LOG_FORMAT"
+          "value" : "json"
         }
       ]
       logConfiguration = {
@@ -265,6 +269,10 @@ resource "aws_ecs_task_definition" "handle-csv" {
         {
           "name" : "DB_HOST"
           "value" : "${aws_db_instance.mock_api_db.address}"
+        },
+        {
+          "name" : "LOG_FORMAT"
+          "value" : "json"
         },
         {
           "name" : "ELIGIBILITY_SCREENER_CSV_OUTPUT_PATH"
