@@ -83,6 +83,9 @@ resource "aws_security_group" "allow-api-traffic" {
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 data "aws_cloudwatch_log_group" "mock_api" {
@@ -193,8 +196,8 @@ data "aws_iam_policy_document" "handle-csv" {
 }
 
 resource "aws_security_group" "handle-csv" {
-  description = "allows internal connections"
-  name        = "csv-handler"
+  description = "allows connections for the csv generation ecs task"
+  name        = "ecs-task-security-group"
   vpc_id      = module.constants.vpc_id
 
   ingress {
@@ -210,6 +213,9 @@ resource "aws_security_group" "handle-csv" {
     protocol         = "-1"
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
+  }
+  lifecycle {
+    create_before_destroy = true
   }
 }
 resource "aws_ecs_task_definition" "handle-csv" {
