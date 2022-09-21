@@ -41,11 +41,8 @@ data "aws_iam_policy_document" "access_ecr_policy" {
       "logs:PutLogEvents",
       "logs:DescribeLogStreams"
     ]
-    effect = "Allow"
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:logs:*:*:*"]
-    }
+    effect    = "Allow"
+    resources = ["*"]
   }
 }
 
