@@ -12,6 +12,3 @@ variable "environment_name" {
 data "aws_ssm_parameter" "db_username" {
   name = "/common/mock_api_db/POSTGRES_USER"
 }
-data "aws_ssm_parameter" "db_pw" {
-  name = "/common/mock_api_db/POSTGRES_PASSWORD"
-}

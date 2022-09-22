@@ -13,7 +13,7 @@ resource "random_password" "random_db_password" {
 }
 
 resource "aws_ssm_parameter" "random_db_password" {
-  name  = "common/mock_api_db/POSTGRES_PASSWORD"
+  name  = "/common/mock_api_db/POSTGRES_PASSWORD"
   type  = "SecureString"
   value = random_password.random_db_password.result
 }
@@ -26,7 +26,7 @@ resource "random_password" "random_api_key" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 resource "aws_ssm_parameter" "random_api_key" {
-  name  = "common/mock_api_db/API_AUTH_TOKEN"
+  name  = "/common/mock_api_db/API_AUTH_TOKEN"
   type  = "SecureString"
   value = random_password.random_api_key.result
 }
@@ -66,7 +66,8 @@ resource "aws_db_instance" "mock_api_db" {
   apply_immediately               = true
   deletion_protection             = true
   storage_encrypted               = true
+  final_snapshot_identifier       = "${var.environment_name}-final"
   vpc_security_group_ids          = ["${aws_security_group.rds.id}"]
   username                        = data.aws_ssm_parameter.db_username.value
-  password                        = data.aws_ssm_parameter.db_pw.value
+  password                        = aws_ssm_parameter.random_db_password.value
 }

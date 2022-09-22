@@ -128,7 +128,7 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
         },
         {
           "name" : "POSTGRES_PASSWORD"
-          "value" : "${data.aws_ssm_parameter.db_pw.value}"
+          "value" : "${aws_ssm_parameter.random_db_password.value}"
         },
         {
           "name" : "POSTGRES_DB"
@@ -137,6 +137,10 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
         {
           "name" : "DB_HOST"
           "value" : "${aws_db_instance.mock_api_db.address}"
+        },
+        {
+          "name" : "API_AUTH_TOKEN"
+          "value" : "${aws_ssm_parameter.random_api_key.value}"
         },
         {
           "name" : "LOG_FORMAT"
@@ -260,7 +264,7 @@ resource "aws_ecs_task_definition" "handle-csv" {
         },
         {
           "name" : "POSTGRES_PASSWORD"
-          "value" : "${data.aws_ssm_parameter.db_pw.value}"
+          "value" : "${aws_ssm_parameter.random_db_password.value}"
         },
         {
           "name" : "POSTGRES_DB"
