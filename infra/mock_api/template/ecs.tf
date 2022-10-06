@@ -101,7 +101,7 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
   container_definitions = jsonencode([
     {
       name      = "${var.environment_name}-mock-api-container"
-      image     = "546642427916.dkr.ecr.us-east-1.amazonaws.com/mock-api-repo:latest"
+      image     = "546642427916.dkr.ecr.us-east-1.amazonaws.com/mock-api-repo:latest-${var.environment_name}"
       memory    = 1024
       cpu       = 512
       essential = true
@@ -150,7 +150,7 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
       logConfiguration = {
         logDriver = "awslogs",
         options = {
-          "awslogs-group"         = "mock-api",
+          "awslogs-group"         = "${data.aws_cloudwatch_log_group.mock_api.name}",
           "awslogs-region"        = "us-east-1",
           "awslogs-stream-prefix" = "mock-api"
         }
@@ -237,7 +237,7 @@ resource "aws_ecs_task_definition" "handle-csv" {
   container_definitions = jsonencode([
     {
       name      = "${var.environment_name}-mock-api-container"
-      image     = "546642427916.dkr.ecr.us-east-1.amazonaws.com/mock-api-repo:latest"
+      image     = "546642427916.dkr.ecr.us-east-1.amazonaws.com/mock-api-repo:latest-${var.environment_name}"
       memory    = 1024
       cpu       = 512
       essential = true
