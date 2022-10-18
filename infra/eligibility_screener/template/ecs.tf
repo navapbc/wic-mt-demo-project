@@ -1,16 +1,22 @@
-# security group for screener
+# ---------------------------------------
+#
+# Locals
+#
+# ---------------------------------------
+locals {
+  container_name = "${var.environment_name}-eligibility-screener-container"
+}
+
+# ---------------------------------------
+#
+# Security Groups
+#
+# ---------------------------------------
 resource "aws_security_group" "allow-screener-traffic" {
   name        = "allow_screener_traffic"
   description = "This rule blocks all traffic unless it is HTTPS for the eligibility screener"
   vpc_id      = module.constants.vpc_id
 
-  ingress {
-    description = "HTTP traffic from VPC"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/8"]
-  }
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
     description = "Allow traffic from internet"
@@ -28,6 +34,78 @@ resource "aws_security_group" "allow-screener-traffic" {
   }
 }
 
+resource "aws_security_group" "allow-lb-traffic" {
+  name        = "screener_load_balancer_sg"
+  description = "Allows load balancers to communicate with tasks"
+  vpc_id      = module.constants.vpc_id
+
+  ingress {
+    description      = "HTTP traffic from anywhere"
+    from_port        = 80
+    to_port          = 80
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+  egress {
+    description      = "allow all outbound traffic from load balancer"
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+}
+
+# ---------------------------------------
+#
+# Load Balancing
+#
+# ---------------------------------------
+
+resource "aws_lb" "eligibility-screener" {
+  name               = "${var.environment_name}-screener-lb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.allow-lb-traffic.id]
+  subnets = [
+    "subnet-05b0618f4ef1a808c",
+    "subnet-06067596a1f981034",
+    "subnet-06b4ec8ff6311f69d",
+    "subnet-08d7f1f9802fd20c4",
+    "subnet-09c317466f27bb9bb",
+    "subnet-0ccc97c07aa49a0ae"
+  ] # find a way to map all the default ones here; hardcoding for now
+  ip_address_type        = "ipv4"
+  desync_mitigation_mode = "defensive"
+}
+
+resource "aws_lb_target_group" "eligibility-screener" {
+  name        = "${var.environment_name}-screener-lb"
+  port        = 3000
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = module.constants.vpc_id
+  health_check {
+    enabled = true
+    port    = 3000
+  }
+}
+
+resource "aws_lb_listener" "screener" {
+  load_balancer_arn = aws_lb.eligibility-screener.arn
+  port              = 80
+  protocol          = "HTTP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.eligibility-screener.arn
+  }
+}
+# ---------------------------------------
+#
+# ECS
+#
+# ---------------------------------------
 resource "aws_ecs_cluster" "eligibility-screener-ecs-cluster" {
   name = var.environment_name
 }
@@ -49,10 +127,17 @@ resource "aws_ecs_service" "eligibility-screener-ecs-service" {
     rollback = true
   }
   force_new_deployment = true
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.eligibility-screener.arn
+    container_name   = local.container_name # from the task definition 
+    container_port   = 3000                 # from the exposed docker container on the screener
+  }
 }
 data "aws_cloudwatch_log_group" "eligibility_screener" {
   name = "screener"
 }
+
 resource "aws_ecs_task_definition" "eligibility-screener-ecs-task-definition" {
   family                   = "${var.environment_name}-screener-task-definition"
   network_mode             = "awsvpc"
@@ -62,14 +147,14 @@ resource "aws_ecs_task_definition" "eligibility-screener-ecs-task-definition" {
   execution_role_arn       = "arn:aws:iam::546642427916:role/wic-mt-task-executor"
   container_definitions = jsonencode([
     {
-      name      = "${var.environment_name}-eligibility-screener-container"
+      name      = local.container_name
       image     = "546642427916.dkr.ecr.us-east-1.amazonaws.com/eligibility-screener-repo:latest-${var.environment_name}"
       memory    = 1024
       cpu       = 512
       essential = true
       portMappings = [
         {
-          containerPort : 8080
+          containerPort : 3000
         }
       ],
       logConfiguration = {
