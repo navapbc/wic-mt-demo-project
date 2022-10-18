@@ -1,5 +1,14 @@
 # ---------------------------------------
 #
+# Locals
+#
+# ---------------------------------------
+locals {
+  container_name = "${var.environment_name}-eligibility-screener-container"
+}
+
+# ---------------------------------------
+#
 # Security Groups
 #
 # ---------------------------------------
@@ -14,13 +23,6 @@ resource "aws_security_group" "allow-screener-traffic" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/8"]
-  }
-  ingress {
-    description = "VPC CIDR; allows healthchecks"
-    from_port   = 8080
-    protocol    = "tcp"
-    to_port     = 8080
-    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -53,18 +55,8 @@ resource "aws_security_group" "allow-lb-traffic" {
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
-
-  ingress {
-    description = "allow lb traffic"
-    from_port   = 0
-    to_port     = 65535
-    protocol    = "tcp"
-    security_groups = [
-      "sg-0c50cf775611d9db2",
-    ]
-  }
   egress {
-    description      = "allow all outbound traffic from screener"
+    description      = "allow all outbound traffic from load balancer"
     from_port        = 0
     to_port          = 0
     protocol         = "-1"
@@ -96,7 +88,6 @@ resource "aws_lb" "eligibility-screener" {
   desync_mitigation_mode = "defensive"
 }
 
-# must be ip!!
 resource "aws_lb_target_group" "eligibility-screener" {
   name        = "${var.environment_name}-screener-lb"
   port        = 3000
@@ -147,9 +138,8 @@ resource "aws_ecs_service" "eligibility-screener-ecs-service" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.eligibility-screener.arn
-    # target_group_arn = "arn:aws:elasticloadbalancing:us-east-1:546642427916:targetgroup/screener-lb-3000/72e92f65fe721cd1" # hardcoded for test purposes; wic-mt-screener target group
-    container_name = "${var.environment_name}-eligibility-screener-container" # from the task definition 
-    container_port = 3000                                                     # from the exposed docker container on the screener
+    container_name = local.container_name # from the task definition 
+    container_port = 3000  # from the exposed docker container on the screener
   }
 }
 data "aws_cloudwatch_log_group" "eligibility_screener" {
@@ -165,7 +155,7 @@ resource "aws_ecs_task_definition" "eligibility-screener-ecs-task-definition" {
   execution_role_arn       = "arn:aws:iam::546642427916:role/wic-mt-task-executor"
   container_definitions = jsonencode([
     {
-      name      = "${var.environment_name}-eligibility-screener-container"
+      name      = local.container_name
       image     = "546642427916.dkr.ecr.us-east-1.amazonaws.com/eligibility-screener-repo:latest-${var.environment_name}"
       memory    = 1024
       cpu       = 512
