@@ -18,14 +18,6 @@ resource "aws_security_group" "allow-screener-traffic" {
   vpc_id      = module.constants.vpc_id
 
   ingress {
-    description = "HTTP traffic from VPC"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/8"]
-  }
-
-  ingress {
     cidr_blocks = ["0.0.0.0/0"]
     description = "Allow traffic from internet"
     from_port   = 3000
@@ -48,7 +40,7 @@ resource "aws_security_group" "allow-lb-traffic" {
   vpc_id      = module.constants.vpc_id
 
   ingress {
-    description      = "HTTP traffic from VPC"
+    description      = "HTTP traffic from anywhere"
     from_port        = 80
     to_port          = 80
     protocol         = "tcp"
