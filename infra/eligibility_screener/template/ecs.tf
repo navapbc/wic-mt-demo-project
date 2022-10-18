@@ -138,8 +138,8 @@ resource "aws_ecs_service" "eligibility-screener-ecs-service" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.eligibility-screener.arn
-    container_name = local.container_name # from the task definition 
-    container_port = 3000  # from the exposed docker container on the screener
+    container_name   = local.container_name # from the task definition 
+    container_port   = 3000                 # from the exposed docker container on the screener
   }
 }
 data "aws_cloudwatch_log_group" "eligibility_screener" {
