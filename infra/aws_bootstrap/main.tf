@@ -20,6 +20,10 @@ terraform {
     }
   }
 }
+locals {
+  # enforce region where infrastructure should be deployed
+  region = "us-east-1"
+}
 
 # # dynamodb table to support state locking
 resource "aws_dynamodb_table" "tf_state_table" {
@@ -34,7 +38,7 @@ resource "aws_dynamodb_table" "tf_state_table" {
 }
 
 provider "aws" {
-  region  = "us-east-1"
+  region  = local.region
   profile = "wic-mt"
 }
 
@@ -44,4 +48,9 @@ data "aws_region" "current" {
 data "aws_caller_identity" "current" {
 
 }
-#todo fix tf state
+# Internal QA testing next week
+# spin up tmp ecs service/task that runs the image with the QA tag
+# one more env_var (api_host)
+# screener needs to know how to connect to mock api -> service name vs task name
+# more secrets?? (screener may need mock api token)
+# talk to Connor about DNS records and CNAME
