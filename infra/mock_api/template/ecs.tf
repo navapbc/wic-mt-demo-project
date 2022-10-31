@@ -101,7 +101,7 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
   container_definitions = jsonencode([
     {
       name      = "${var.environment_name}-mock-api-container"
-      image     = "546642427916.dkr.ecr.us-east-1.amazonaws.com/mock-api-repo:latest"
+      image     = "546642427916.dkr.ecr.us-east-1.amazonaws.com/mock-api-repo:latest-${var.environment_name}"
       memory    = 1024
       cpu       = 512
       essential = true
