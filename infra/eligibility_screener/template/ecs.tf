@@ -160,10 +160,10 @@ resource "aws_ecs_task_definition" "eligibility-screener-ecs-task-definition" {
           containerPort : 3000
         }
       ],
-      environment: [
+      environment : [
         {
-          "name": "API_HOST"
-          "value": "http://test-mock-api-lb-2033452615.us-east-1.elb.amazonaws.com:80" # hardcoded for persistience, mockapi load balancer DNS name
+          "name" : "API_HOST"
+          "value" : "http://test-mock-api-lb-2033452615.us-east-1.elb.amazonaws.com:80" # hardcoded for persistience, mockapi load balancer DNS name
         },
         {
           "name" : "API_AUTH_TOKEN"

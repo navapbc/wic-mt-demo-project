@@ -1,4 +1,4 @@
-locals{
+locals {
   container_name = "${var.environment_name}-mock-api-container"
 }
 # ---------------------------------------
@@ -7,13 +7,13 @@ locals{
 #
 # ---------------------------------------
 data "aws_security_group" "allow-lb-traffic" {
-  name        = "screener_load_balancer_sg"
+  name = "screener_load_balancer_sg"
 }
 resource "aws_lb" "mock_api" {
   name               = "${var.environment_name}-mock-api-lb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [data.aws_security_group.allow-lb-traffic.id] 
+  security_groups    = [data.aws_security_group.allow-lb-traffic.id]
   subnets = [
     "subnet-05b0618f4ef1a808c",
     "subnet-06067596a1f981034",
@@ -35,7 +35,7 @@ resource "aws_lb_target_group" "mock_api" {
   health_check {
     enabled = true
     port    = 8080
-    path = "/v1/healthcheck"
+    path    = "/v1/healthcheck"
   }
 }
 
@@ -115,10 +115,10 @@ resource "aws_security_group" "allow-api-traffic" {
 
   # This is for testing purposes ONLY
   ingress {
-    description = "Limit traffic to just the screener"
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
+    description     = "Limit traffic to just the screener"
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
     security_groups = [data.aws_security_group.allow-lb-traffic.id]
   }
 
