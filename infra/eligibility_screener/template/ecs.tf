@@ -137,6 +137,9 @@ resource "aws_ecs_service" "eligibility-screener-ecs-service" {
 data "aws_cloudwatch_log_group" "eligibility_screener" {
   name = "screener"
 }
+data "aws_ssm_parameter" "random_api_key" {
+  name = "/common/mock_api_db/API_AUTH_TOKEN"
+}
 
 resource "aws_ecs_task_definition" "eligibility-screener-ecs-task-definition" {
   family                   = "${var.environment_name}-screener-task-definition"
@@ -155,6 +158,16 @@ resource "aws_ecs_task_definition" "eligibility-screener-ecs-task-definition" {
       portMappings = [
         {
           containerPort : 3000
+        }
+      ],
+      environment: [
+        {
+          "name": "API_HOST"
+          "value": "http://test-mock-api-lb-2033452615.us-east-1.elb.amazonaws.com:80" # hardcoded for persistience, mockapi load balancer DNS name
+        },
+        {
+          "name" : "API_AUTH_TOKEN"
+          "value" : "${data.aws_ssm_parameter.random_api_key.value}"
         }
       ],
       logConfiguration = {

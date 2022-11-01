@@ -1,3 +1,53 @@
+locals{
+  container_name = "${var.environment_name}-mock-api-container"
+}
+# ---------------------------------------
+#
+# Load Balancing
+#
+# ---------------------------------------
+data "aws_security_group" "allow-lb-traffic" {
+  name        = "screener_load_balancer_sg"
+}
+resource "aws_lb" "mock_api" {
+  name               = "${var.environment_name}-mock-api-lb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [data.aws_security_group.allow-lb-traffic.id] 
+  subnets = [
+    "subnet-05b0618f4ef1a808c",
+    "subnet-06067596a1f981034",
+    "subnet-06b4ec8ff6311f69d",
+    "subnet-08d7f1f9802fd20c4",
+    "subnet-09c317466f27bb9bb",
+    "subnet-0ccc97c07aa49a0ae"
+  ] # find a way to map all the default ones here; hardcoding for now
+  ip_address_type        = "ipv4"
+  desync_mitigation_mode = "defensive"
+}
+
+resource "aws_lb_target_group" "mock_api" {
+  name        = "${var.environment_name}-mock-api-lb"
+  port        = 8080
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = module.constants.vpc_id
+  health_check {
+    enabled = true
+    port    = 8080
+    path = "/v1/healthcheck"
+  }
+}
+
+resource "aws_lb_listener" "screener" {
+  load_balancer_arn = aws_lb.mock_api.arn
+  port              = 80
+  protocol          = "HTTP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.mock_api.arn
+  }
+}
 data "aws_ecr_repository" "mock-api-repository" {
   name = "mock-api-repo"
 }
@@ -50,6 +100,12 @@ resource "aws_ecs_service" "mock-api-ecs-service" {
     rollback = true
   }
   force_new_deployment = true
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.mock_api.arn
+    container_name   = local.container_name # from the task definition 
+    container_port   = 8080                 # from the exposed docker container on the screener
+  }
 }
 
 resource "aws_security_group" "allow-api-traffic" {
@@ -57,22 +113,13 @@ resource "aws_security_group" "allow-api-traffic" {
   description = "This rule blocks all traffic unless it is HTTPS for the eligibility screener"
   vpc_id      = module.constants.vpc_id
 
-  ingress {
-    description = "Allow HTTPS traffic"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    # use security group as the source
-    cidr_blocks = ["172.31.0.0/16"] # ip range of the VPC
-  }
-
   # This is for testing purposes ONLY
   ingress {
-    description = "Allow all traffic for testing"
+    description = "Limit traffic to just the screener"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    security_groups = [data.aws_security_group.allow-lb-traffic.id]
   }
 
   egress {
@@ -100,7 +147,7 @@ resource "aws_ecs_task_definition" "mock-api-ecs-task-definition" {
   execution_role_arn       = "arn:aws:iam::546642427916:role/wic-mt-task-executor"
   container_definitions = jsonencode([
     {
-      name      = "${var.environment_name}-mock-api-container"
+      name      = "${local.container_name}"
       image     = "546642427916.dkr.ecr.us-east-1.amazonaws.com/mock-api-repo:latest-${var.environment_name}"
       memory    = 1024
       cpu       = 512
