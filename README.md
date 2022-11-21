@@ -40,8 +40,14 @@ For our project work, each PR is required to have at least one code review and a
 
 We are using [Terraform](https://www.terraform.io) to manage our infrastructure as code.
 
-[@TODO] We are hosting our environments in AWS.
-[@TODO] Environments
-[@TODO] Secrets
+We are hosting our environments and networking resources in AWS.
+Environments
+There is a `test` environment enabled for both the eligibility screener and the mock api. Each
+application has a `main.tf` which serves as a template for creating the relevant resources required
+for hosting the application in different environments. (e.g. ECS tasks, security groups)
+
+Secrets:
+Secrets are managed in AWS Parameter Store. Variables should be referenced using Terraform's
+`aws_ssm_parameter` data resources.
 [@TODO] Application environment variables
 [@TODO] Logging, Monitoring, and Alerting
