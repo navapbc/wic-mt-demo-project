@@ -47,6 +47,15 @@ resource "aws_security_group" "allow-lb-traffic" {
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
+
+  ingress {
+    description      = "HTTPS traffic from anywhere"
+    from_port        = 443
+    to_port          = 443
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
   egress {
     description      = "allow all outbound traffic from load balancer"
     from_port        = 0
@@ -101,6 +110,41 @@ resource "aws_lb_listener" "screener" {
     target_group_arn = aws_lb_target_group.eligibility-screener.arn
   }
 }
+
+resource "aws_lb_listener" "screener_https" {
+  load_balancer_arn = aws_lb.eligibility-screener.arn
+  port              = 443
+  protocol          = "HTTPS"
+  # ssl_policy = 
+  # certificate_arn = 
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.eligibility-screener.arn
+  }
+}
+# ---------------------------------------
+#
+# Route53 Management
+#
+# ---------------------------------------
+# Note: this is only management of the subdomain. NS records need to be updated with the root level domain
+
+resource "aws_route53_zone" "eligibility-screener"{
+  name = "demo.navapbc.com"
+}
+
+resource "aws_route53_record" "eligibility-screener" {
+  zone_id = aws_route53_zone.eligibility-screener.id
+  name = "wic-eligibility.demo.navapbc.com"
+  type = "A"
+
+  alias {
+    name = "${aws_lb.eligibility-screener.dns_name}"
+    zone_id = "${aws_lb.eligibility-screener.zone_id}"
+    evaluate_target_health = true
+  }
+}
+
 # ---------------------------------------
 #
 # ECS
