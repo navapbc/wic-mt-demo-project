@@ -101,6 +101,7 @@ resource "aws_lb_target_group" "eligibility-screener" {
   }
 }
 
+# after authority is recognized, redirect port 80 to port 443
 resource "aws_lb_listener" "screener" {
   load_balancer_arn = aws_lb.eligibility-screener.arn
   port              = 80
@@ -136,7 +137,7 @@ resource "aws_route53_zone" "eligibility-screener"{
 resource "aws_route53_record" "eligibility-screener" {
   zone_id = aws_route53_zone.eligibility-screener.id
   name = "wic-eligibility.demo.navapbc.com"
-  type = "A"
+  type = "CNAME"
 
   alias {
     name = "${aws_lb.eligibility-screener.dns_name}"
