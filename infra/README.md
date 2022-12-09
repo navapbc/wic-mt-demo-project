@@ -23,9 +23,12 @@ Next, install the appropriate version
 ```
 $ tfenv install 1.2.0
 ```
+## Installation order
+For first time installation, run `terraform init` and `terraform plan` in each of the following directories. The output should report that there are no changes.
 
-## Eligibility Screener Overview
+     1. aws_bootstrap
+     2. mock_api/environment/[environment_name]
+     3. eligibility_screener/environment/[environment_name]
 
-## Mock API overview
-
-## Connection to AWS
+## Contributing Infra changes to the application:
+In most cases, changes that happen in this repository will not require application deployment unless those changes involves how resources required for the CD workflows are referenced. Please note that deployment in this repo doesn't update the Docker images associated with each application. 
