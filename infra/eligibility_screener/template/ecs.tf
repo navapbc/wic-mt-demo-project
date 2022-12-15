@@ -117,10 +117,10 @@ resource "aws_lb_listener" "screener" {
   port              = 80
   protocol          = "HTTP"
   default_action {
-    type             = "redirect"
+    type = "redirect"
     redirect {
-      port = "443"
-      protocol = "HTTPS"
+      port        = "443"
+      protocol    = "HTTPS"
       status_code = "HTTP_301"
     }
   }
@@ -186,8 +186,8 @@ resource "aws_ecs_task_definition" "eligibility-screener-ecs-task-definition" {
       ],
       environment : [
         {
-          "name": "NEXT_PUBLIC_DEMO_MODE"
-          "value": "true"
+          "name" : "NEXT_PUBLIC_DEMO_MODE"
+          "value" : "true"
         },
         {
           "name" : "API_HOST"
