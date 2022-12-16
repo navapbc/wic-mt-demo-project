@@ -47,6 +47,14 @@ resource "aws_security_group" "allow-lb-traffic" {
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
+  ingress {
+    description      = "HTTPS traffic from anywhere"
+    from_port        = 443
+    to_port          = 443
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
   egress {
     description      = "allow all outbound traffic from load balancer"
     from_port        = 0
@@ -92,13 +100,29 @@ resource "aws_lb_target_group" "eligibility-screener" {
   }
 }
 
+resource "aws_lb_listener" "screener_secure" {
+  load_balancer_arn = aws_lb.eligibility-screener.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = "arn:aws:acm:us-east-1:546642427916:certificate/91022588-849d-4b53-8ad1-b649607795ae"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.eligibility-screener.arn
+  }
+}
+
 resource "aws_lb_listener" "screener" {
   load_balancer_arn = aws_lb.eligibility-screener.arn
   port              = 80
   protocol          = "HTTP"
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.eligibility-screener.arn
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
   }
 }
 # ---------------------------------------
