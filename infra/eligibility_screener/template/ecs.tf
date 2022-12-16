@@ -186,10 +186,6 @@ resource "aws_ecs_task_definition" "eligibility-screener-ecs-task-definition" {
       ],
       environment : [
         {
-          "name" : "NEXT_PUBLIC_DEMO_MODE"
-          "value" : "true"
-        },
-        {
           "name" : "API_HOST"
           "value" : "http://test-mock-api-lb-2033452615.us-east-1.elb.amazonaws.com:80" # hardcoded for persistience, mockapi load balancer DNS name
         },
