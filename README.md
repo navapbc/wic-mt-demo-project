@@ -65,3 +65,20 @@ ECS tasks: This logging group contains varying information about the ECS tasks t
 RDS: This logging group contains information about RDS events. Examples include: creating checkpoints and how long that process took to complete.
 
 Container insights: This logging group contains metrics about Fargate tasks such as CPU and reserved memory
+
+## Local Development
+
+To run the eligibility screener and the Mock API in development mode locally:
+
+1. Navigate to the root directory of this repo
+2. Clone the eligibility screener repo: `git clone git@github.com:navapbc/wic-mt-demo-project-eligibility-screener.git eligibility-screener`
+3. Clone the mock API repo: `git clone git@github.com:navapbc/wic-mt-demo-project-mock-api.git mock-api`
+4. Build the docker images and start the containers (it will start 3 containers: mock api, eligibility screener, postgresql): `docker-compose up -d --build`
+5. If this is the first time you are running the mock API, then it will crash because the database migrations haven't been run yet. Run them and then restart the container: `docker-compose run --rm mock-api poetry run db-migrate-up && docker-compose up -d`
+6. Run storybook: `docker-compose exec eligibility-screener yarn storybook`
+
+Now you can navigate to:
+
+- `localhost:3000` to access the eligibility screener
+- `localhost:8080/v1/docs` to access the swagger docs
+- `localhost:6006` to access storybook
